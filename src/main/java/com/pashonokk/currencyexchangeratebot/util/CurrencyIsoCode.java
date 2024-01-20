@@ -1,6 +1,6 @@
 package com.pashonokk.currencyexchangeratebot.util;
 
-import com.pashonokk.currencyexchangeratebot.exception.CurrencyIsNotSupported;
+import com.pashonokk.currencyexchangeratebot.exception.CurrencyIsNotSupportedException;
 import lombok.Getter;
 
 @Getter
@@ -25,7 +25,7 @@ public enum CurrencyIsoCode {
                 return currency.getName();
             }
         }
-        throw new CurrencyIsNotSupported("Currency iso code" + isoCode + " is not supported");
+        throw new CurrencyIsNotSupportedException("Currency iso code" + isoCode + " is not supported");
     }
 
     public static Integer getIsoCodeByCurrencyName(String currencyName) {
@@ -34,6 +34,6 @@ public enum CurrencyIsoCode {
                 return currency.getIsoCode();
             }
         }
-        throw new CurrencyIsNotSupported("Currency " + currencyName + " is not supported");
+        throw new CurrencyIsNotSupportedException("Currency " + currencyName + " is not supported");
     }
 }

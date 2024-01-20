@@ -3,7 +3,7 @@ package com.pashonokk.currencyexchangeratebot.service.impl;
 import com.pashonokk.currencyexchangeratebot.dto.MonoCurrencyCache;
 import com.pashonokk.currencyexchangeratebot.dto.MonoExchangeCurrencyRate;
 import com.pashonokk.currencyexchangeratebot.dto.SpecificBankResponseExchangeCurrencyRate;
-import com.pashonokk.currencyexchangeratebot.exception.CurrencyIsNotSupported;
+import com.pashonokk.currencyexchangeratebot.exception.CurrencyIsNotSupportedException;
 import com.pashonokk.currencyexchangeratebot.service.CurrencyService;
 import com.pashonokk.currencyexchangeratebot.util.CurrencyIsoCode;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +28,14 @@ public class MonoCurrencyService implements CurrencyService {
 
     @SneakyThrows
     @Override
-    public SpecificBankResponseExchangeCurrencyRate requestExchangeCurrencyRate(Long chatId, String currencyName) {
-        if(monoCurrencyCache.getMonoExchangeCurrencyRateList()!=null &&
-                Duration.between(monoCurrencyCache.getRequestTime(), java.time.LocalDateTime.now()).toMinutes()<5){
-            System.out.println("mono from cache");
+    public List<SpecificBankResponseExchangeCurrencyRate> requestExchangeCurrencyRate(Long chatId, String currencyName) {
+        if (monoCurrencyCache.getMonoExchangeCurrencyRateList() != null &&
+                Duration.between(monoCurrencyCache.getRequestTime(), java.time.LocalDateTime.now()).toMinutes() < 5) {
+            System.out.println("mono from cache"); //todo delete
             return mapToResponse(getNeededCurrency(monoCurrencyCache.getMonoExchangeCurrencyRateList(), currencyName));
         }
-        ParameterizedTypeReference<List<MonoExchangeCurrencyRate>> responseType = new ParameterizedTypeReference<>() {};
+        ParameterizedTypeReference<List<MonoExchangeCurrencyRate>> responseType = new ParameterizedTypeReference<>() {
+        };
 
         ResponseEntity<List<MonoExchangeCurrencyRate>> exchangeCurrencyRateResponseEntity = restTemplate.exchange( //todo робити запит на всі валюти якось не прікольно і додати кеш
                 "https://api.monobank.ua/bank/currency",
@@ -44,7 +45,7 @@ public class MonoCurrencyService implements CurrencyService {
         );
 
         MonoExchangeCurrencyRate neededCurrency = getNeededCurrency(Objects.requireNonNull(exchangeCurrencyRateResponseEntity.getBody()), currencyName);
-        SpecificBankResponseExchangeCurrencyRate specificBankResponseExchangeCurrencyRate = mapToResponse(neededCurrency);
+        List<SpecificBankResponseExchangeCurrencyRate> specificBankResponseExchangeCurrencyRate = mapToResponse(neededCurrency);
         monoCurrencyCache.setCache(exchangeCurrencyRateResponseEntity.getBody());
         return specificBankResponseExchangeCurrencyRate;
     }
@@ -58,24 +59,26 @@ public class MonoCurrencyService implements CurrencyService {
                     return (currencyCodeA.equals(neededCode)) && currencyCodeB.equals("980");
                 })
                 .findFirst()
-                .orElseThrow(() -> new CurrencyIsNotSupported(
+                .orElseThrow(() -> new CurrencyIsNotSupportedException(
                         String.format(CURRENCY_EXCEPTION_MESSAGE, currencyName)));
     }
 
 
-    private SpecificBankResponseExchangeCurrencyRate mapToResponse(MonoExchangeCurrencyRate neededCurrencyRate) {
+    private List<SpecificBankResponseExchangeCurrencyRate> mapToResponse(MonoExchangeCurrencyRate neededCurrencyRate) {
         double rateBuy = neededCurrencyRate.getRateBuy();
         double rateSell = neededCurrencyRate.getRateSell();
         if (rateBuy == 0.0) {
             rateBuy = neededCurrencyRate.getRateCross();
             rateSell = 1 / neededCurrencyRate.getRateCross();
         }
-        return SpecificBankResponseExchangeCurrencyRate.builder()
-                .ccy(CurrencyIsoCode.getCurrencyNameByIsoCode(neededCurrencyRate.getCurrencyCodeA()))
-                .baseCcy(CurrencyIsoCode.getCurrencyNameByIsoCode(neededCurrencyRate.getCurrencyCodeB()))
-                .rateBuy(String.format("%.4f", rateBuy))
-                .rateSell(String.format("%.4f", rateSell))
-                .build();
+        return List.of(
+                SpecificBankResponseExchangeCurrencyRate.builder()
+                        .bankName("MonoBank")
+                        .ccy(CurrencyIsoCode.getCurrencyNameByIsoCode(neededCurrencyRate.getCurrencyCodeA()))
+                        .baseCcy("UAH")
+                        .rateBuy(String.format("%.4f", rateBuy))
+                        .rateSell(String.format("%.4f", rateSell))
+                        .build());
     }
 
 }

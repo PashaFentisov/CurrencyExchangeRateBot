@@ -15,19 +15,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SendCurrencyRatesService {
     private final CurrencyService monoCurrencyService;
-    private final CurrencyService privatCurrencyService;
+    private final RateInUaCurrencyService rateInUaCurrencyService;
     private final TelegramBot telegramBot;
 
     @SneakyThrows
     public void sendNotification(Long chatId, String currencyName) {  //todo later can adjust strategy pattern
-        SpecificBankResponseExchangeCurrencyRate responseMonoExchangeCurrencyRates = monoCurrencyService
+        List<SpecificBankResponseExchangeCurrencyRate> monoCurrencyRates = monoCurrencyService
                 .requestExchangeCurrencyRate(chatId, currencyName);
-        SpecificBankResponseExchangeCurrencyRate responsePrivatExchangeCurrencyRates = privatCurrencyService
+        List<SpecificBankResponseExchangeCurrencyRate> rateInUaCurrencyRates = rateInUaCurrencyService
                 .requestExchangeCurrencyRate(chatId, currencyName);
 
         AllBanksCurrencyRates allBanksCurrencyRates = new AllBanksCurrencyRates();
-        allBanksCurrencyRates.getRates().put("MonoBank", responseMonoExchangeCurrencyRates);
-        allBanksCurrencyRates.getRates().put("PrivatBank", responsePrivatExchangeCurrencyRates);
+        allBanksCurrencyRates.getRates().addAll(monoCurrencyRates);
+        allBanksCurrencyRates.getRates().addAll(rateInUaCurrencyRates);
 
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);

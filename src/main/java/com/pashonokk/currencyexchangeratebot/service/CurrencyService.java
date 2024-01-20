@@ -4,7 +4,7 @@ import com.pashonokk.currencyexchangeratebot.dto.SpecificBankResponseExchangeCur
 
 import java.util.List;
 
-public interface CurrencyService {
-    SpecificBankResponseExchangeCurrencyRate requestExchangeCurrencyRate(Long chatId, String currencyRate);
+public interface CurrencyService{
+    List<SpecificBankResponseExchangeCurrencyRate> requestExchangeCurrencyRate(Long chatId, String currencyRate);
 
 }

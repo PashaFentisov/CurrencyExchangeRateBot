@@ -1,8 +1,6 @@
 package com.pashonokk.currencyexchangeratebot;
 
-import com.pashonokk.currencyexchangeratebot.service.CurrencyService;
-import com.pashonokk.currencyexchangeratebot.service.impl.MonoCurrencyService;
-import com.pashonokk.currencyexchangeratebot.service.impl.PrivatCurrencyService;
+import com.pashonokk.currencyexchangeratebot.service.impl.RateInUaCurrencyService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;

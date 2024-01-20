@@ -9,6 +9,7 @@ import lombok.*;
 @Builder
 @ToString
 public class SpecificBankResponseExchangeCurrencyRate {
+    private String bankName;
     private String ccy;
     private String baseCcy;
     private String rateSell;
