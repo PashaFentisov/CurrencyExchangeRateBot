@@ -1,0 +1,16 @@
+package com.pashonokk.currencyexchangeratebot.dto;
+
+import lombok.*;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@ToString
+public class SpecificBankResponseExchangeCurrencyRate {
+    private String ccy;
+    private String baseCcy;
+    private String rateSell;
+    private String rateBuy;
+}
