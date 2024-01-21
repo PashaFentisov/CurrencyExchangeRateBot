@@ -11,6 +11,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Exchanger {
     private String name;
-
     private Rate rates;
 }

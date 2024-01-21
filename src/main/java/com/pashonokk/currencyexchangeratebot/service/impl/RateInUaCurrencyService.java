@@ -20,22 +20,22 @@ public class RateInUaCurrencyService implements CurrencyService {
     private final RateInCurrencyCache rateInCurrencyCache = new RateInCurrencyCache();
 
     @Override
-    public List<SpecificBankResponseExchangeCurrencyRate> requestExchangeCurrencyRate(Long chatId, String currencyName) {
+    public List<SpecificBankResponseExchangeCurrencyRate> requestExchangeCurrencyRate(String currencyName) {
         ResponseEntity<RateInApiRequest> apiRequestResponseEntity = restTemplate
                 .getForEntity("https://rate.in.ua/api/service/banks-of-ukraine", RateInApiRequest.class);
         if (rateInCurrencyCache.getRateInApiRequest() != null &&
                 Duration.between(rateInCurrencyCache.getRequestTime(), java.time.LocalDateTime.now()).toMinutes() < 10) {
-            return mapToResponse(Objects.requireNonNull(rateInCurrencyCache.getRateInApiRequest()), currencyName);
+            return prepareResponse(Objects.requireNonNull(rateInCurrencyCache.getRateInApiRequest()), currencyName);
         }
         rateInCurrencyCache.setCache(apiRequestResponseEntity.getBody());
-        return mapToResponse(Objects.requireNonNull(apiRequestResponseEntity.getBody()), currencyName);
+        return prepareResponse(Objects.requireNonNull(apiRequestResponseEntity.getBody()), currencyName);
     }
 
 
     /**
      * We filter OTP bank because it doesn't have the latest rates
      */
-    private List<SpecificBankResponseExchangeCurrencyRate> mapToResponse(RateInApiRequest rateInApiRequest, String currencyName) {
+    private List<SpecificBankResponseExchangeCurrencyRate> prepareResponse(RateInApiRequest rateInApiRequest, String currencyName) {
         return rateInApiRequest.getExchangers()
                 .values()
                 .stream()
@@ -48,7 +48,6 @@ public class RateInUaCurrencyService implements CurrencyService {
 
     private SpecificBankResponseExchangeCurrencyRate mapToSpecificBankResponse(Exchanger exchanger, String currencyName) {
         CurrencyRate currencyRate = getCurrencyRate(exchanger, currencyName);
-
         return SpecificBankResponseExchangeCurrencyRate.builder()
                 .bankName(exchanger.getName())
                 .ccy(currencyName.toUpperCase())

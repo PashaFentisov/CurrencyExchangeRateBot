@@ -1,16 +1,16 @@
 package com.pashonokk.currencyexchangeratebot.dto;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Setter
 @Getter
 @NoArgsConstructor
-public class AllBanksCurrencyRates {
+public class CurrencyRatesFormatter {
     private final List<SpecificBankResponseExchangeCurrencyRate> rates = new ArrayList<>();
 
     @Override
