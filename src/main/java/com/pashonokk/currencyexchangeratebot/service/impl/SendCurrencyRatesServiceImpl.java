@@ -3,7 +3,7 @@ package com.pashonokk.currencyexchangeratebot.service.impl;
 import com.pashonokk.currencyexchangeratebot.TelegramBot;
 import com.pashonokk.currencyexchangeratebot.dto.AllBanksCurrencyRates;
 import com.pashonokk.currencyexchangeratebot.dto.SpecificBankResponseExchangeCurrencyRate;
-import com.pashonokk.currencyexchangeratebot.service.CurrencyService;
+import com.pashonokk.currencyexchangeratebot.service.SendCurrencyRatesService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
@@ -13,20 +13,18 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class SendCurrencyRatesService {
-    private final CurrencyService monoCurrencyService;
+public class SendCurrencyRatesServiceImpl implements SendCurrencyRatesService {
     private final RateInUaCurrencyService rateInUaCurrencyService;
     private final TelegramBot telegramBot;
 
     @SneakyThrows
-    public void sendNotification(Long chatId, String currencyName) {  //todo later can adjust strategy pattern
-        List<SpecificBankResponseExchangeCurrencyRate> monoCurrencyRates = monoCurrencyService
-                .requestExchangeCurrencyRate(chatId, currencyName);
+    @Override
+    public void sendCurrencyRatesToUser(Long chatId, String currencyName) {
+
         List<SpecificBankResponseExchangeCurrencyRate> rateInUaCurrencyRates = rateInUaCurrencyService
                 .requestExchangeCurrencyRate(chatId, currencyName);
 
         AllBanksCurrencyRates allBanksCurrencyRates = new AllBanksCurrencyRates();
-        allBanksCurrencyRates.getRates().addAll(monoCurrencyRates);
         allBanksCurrencyRates.getRates().addAll(rateInUaCurrencyRates);
 
         SendMessage sendMessage = new SendMessage();

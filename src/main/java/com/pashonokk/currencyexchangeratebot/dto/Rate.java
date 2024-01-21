@@ -1,7 +1,5 @@
-package com.pashonokk.currencyexchangeratebot.dto.rateInApi;
+package com.pashonokk.currencyexchangeratebot.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.ws.rs.GET;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +11,7 @@ import java.time.OffsetDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Rate{
+public class Rate {
 
     private OffsetDateTime updateTime;
 

@@ -1,9 +1,6 @@
 package com.pashonokk.currencyexchangeratebot.service.impl;
 
-import com.pashonokk.currencyexchangeratebot.dto.SpecificBankResponseExchangeCurrencyRate;
-import com.pashonokk.currencyexchangeratebot.dto.rateInApi.ApiRequest;
-import com.pashonokk.currencyexchangeratebot.dto.rateInApi.CurrencyRate;
-import com.pashonokk.currencyexchangeratebot.dto.rateInApi.Exchanger;
+import com.pashonokk.currencyexchangeratebot.dto.*;
 import com.pashonokk.currencyexchangeratebot.exception.CurrencyIsNotSupportedException;
 import com.pashonokk.currencyexchangeratebot.service.CurrencyService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,21 +17,32 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class RateInUaCurrencyService implements CurrencyService {
     private final RestTemplate restTemplate;
+    private final RateInCurrencyCache rateInCurrencyCache = new RateInCurrencyCache();
 
     @Override
     public List<SpecificBankResponseExchangeCurrencyRate> requestExchangeCurrencyRate(Long chatId, String currencyName) {
-        ResponseEntity<ApiRequest> apiRequestResponseEntity = restTemplate
-                .getForEntity("https://rate.in.ua/api/service/banks-of-ukraine", ApiRequest.class);
-
-        return mapToResponse(Objects.requireNonNull(apiRequestResponseEntity.getBody()), currencyName); //todo add cache
+        ResponseEntity<RateInApiRequest> apiRequestResponseEntity = restTemplate
+                .getForEntity("https://rate.in.ua/api/service/banks-of-ukraine", RateInApiRequest.class);
+        if (rateInCurrencyCache.getRateInApiRequest() != null &&
+                Duration.between(rateInCurrencyCache.getRequestTime(), java.time.LocalDateTime.now()).toMinutes() < 10) {
+            return mapToResponse(Objects.requireNonNull(rateInCurrencyCache.getRateInApiRequest()), currencyName);
+        }
+        rateInCurrencyCache.setCache(apiRequestResponseEntity.getBody());
+        return mapToResponse(Objects.requireNonNull(apiRequestResponseEntity.getBody()), currencyName);
     }
 
-    private List<SpecificBankResponseExchangeCurrencyRate> mapToResponse(ApiRequest apiRequest, String currencyName) {
-        return apiRequest.getExchangers()
+
+    /**
+     * We filter OTP bank because it doesn't have the latest rates
+     */
+    private List<SpecificBankResponseExchangeCurrencyRate> mapToResponse(RateInApiRequest rateInApiRequest, String currencyName) {
+        return rateInApiRequest.getExchangers()
                 .values()
                 .stream()
-                .filter(exchanger -> !exchanger.getName().equalsIgnoreCase("monobank"))
+                .filter(exchanger -> !exchanger.getName().equalsIgnoreCase("otp bank"))
                 .map(exchanger -> mapToSpecificBankResponse(exchanger, currencyName))
+                .sorted(Comparator.comparing(SpecificBankResponseExchangeCurrencyRate::getRateSell)
+                        .thenComparing(SpecificBankResponseExchangeCurrencyRate::getRateBuy, Comparator.reverseOrder()))
                 .toList();
     }
 
