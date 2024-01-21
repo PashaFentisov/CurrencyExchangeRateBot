@@ -1,19 +1,26 @@
 package com.pashonokk.currencyexchangeratebot;
 
-import com.pashonokk.currencyexchangeratebot.event.StartEvent;
+import com.pashonokk.currencyexchangeratebot.event.UpdateReceivedEvent;
 import com.pashonokk.currencyexchangeratebot.util.TelegramProperties;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
+import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class TelegramBot extends TelegramLongPollingBot {
     private final TelegramProperties telegramProperties;
     private final ApplicationEventPublisher applicationEventPublisher;
+
 
     @Override
     public String getBotUsername() {
@@ -25,31 +32,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         return telegramProperties.getToken();
     }
 
+    @SneakyThrows
+    @PostConstruct
+    public void initMenu() {
+        List<BotCommand> botCommands = List.of(
+                new BotCommand("/start", "start bot"),
+                new BotCommand("/info", "info about bot possibilities")
+        );
+        this.execute(new SetMyCommands(botCommands, new BotCommandScopeDefault(), null));
+    }
+
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && update.getMessage().hasText() && !update.getMessage().getText().startsWith("/start")) {
-            applicationEventPublisher.publishEvent(new StartEvent(update.getMessage().getChatId(), update.getMessage().getText()));
-        } else {
-            sendInfo(update);
-        }
-    }
-
-    private void sendInfo(Update update) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(update.getMessage().getChatId());
-        String message = """
-                Hello, I am a bot that will help you find out the exchange rate of the currency in the PrivatBank and MonoBank.
-                To start, enter the name of the currency you are interested in.
-                Here are currencies that I can work with:
-                USD, EUR(you can ignore case)
-                """;
-        sendMessage.setText(message);
-        try {
-            execute(sendMessage);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        applicationEventPublisher.publishEvent(new UpdateReceivedEvent(update));
     }
 }
 
